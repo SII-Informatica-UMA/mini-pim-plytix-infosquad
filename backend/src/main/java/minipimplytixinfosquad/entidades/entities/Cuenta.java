@@ -1,4 +1,4 @@
-package com.proyecto.cuentas.entities;
+package main.java.minipimplytixinfosquad.entidades.entities;
 
 import java.util.Objects;
 
@@ -47,3 +47,4 @@ public class Cuenta {
         return "Cuenta{id=" + id + ", nombre='" + nombre + "', propietario='" + propietario + "'}";
     }
 }
+
