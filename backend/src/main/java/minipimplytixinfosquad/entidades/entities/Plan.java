@@ -1,8 +1,6 @@
 package minipimplytixinfosquad.entidades.entities;
 
-import java.util.Date;
 import java.util.Objects;
-import java.util.Set;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -21,22 +19,23 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 @Entity
-public class Cuenta {
+public class Plan {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String nombre;
-    private String direccion;
-    private String nif;
-    
-    @Column(name = "FECHA_ALTA")
-    @Temporal(TemporalType.DATE)
-    private Date fechaAlta;
+    private Integer maxProductos;
+    private Integer maxActivos;
+    private Integer maxAlmacenamiento;
+    private Integer maxCategoriasProductos;
+    private Integer maxCategoriasActivos;
+    private Integer maxRelaciones;
+    private Number precio;
    
-    @OneToMany(mappedBy = "cuenta", cascade = CascadeType.ALL)
-    private Set<Plan> planes;
+    @ManyToOne
+    @JoinColumn(name = "cuenta_id")  // Aquí estamos indicando la clave foránea
+    private Cuenta cuenta;
 
 }
-
