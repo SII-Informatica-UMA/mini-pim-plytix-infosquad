@@ -13,7 +13,7 @@ public class CuentasApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        System.out.println("🔧 Aplicación iniciada correctamente.");
-        System.out.println("📄 El esquema de la base de datos se ha generado automáticamente (DDL).");
+        System.out.println(" Aplicación iniciada correctamente.");
+        System.out.println("El esquema de la base de datos se ha generado automáticamente (DDL).");
     }
 }
