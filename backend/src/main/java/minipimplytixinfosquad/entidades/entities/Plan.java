@@ -1,28 +1,22 @@
 package minipimplytixinfosquad.entidades.entities;
 
-import java.util.Objects;
+import java.util.List;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@EqualsAndHashCode
-@ToString
+@EqualsAndHashCode(exclude = "cuentas")
+@ToString(exclude = "cuentas")
 @Entity
 public class Plan {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue
     private Long id;
 
     private String nombre;
@@ -33,9 +27,8 @@ public class Plan {
     private Integer maxCategoriasActivos;
     private Integer maxRelaciones;
     private Number precio;
-   
-    @ManyToOne
-    @JoinColumn(name = "cuenta_id")  // Aquí estamos indicando la clave foránea
-    private Cuenta cuenta;
 
+    // ✅ Relación inversa: un Plan tiene muchas Cuentas
+    @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL)
+    private List<Cuenta> cuentas;
 }
