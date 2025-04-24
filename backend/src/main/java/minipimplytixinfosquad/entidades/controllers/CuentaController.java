@@ -1,12 +1,19 @@
 package minipimplytixinfosquad.entidades.controllers;
 
+import jakarta.servlet.http.HttpServletRequest;
+import minipimplytixinfosquad.entidades.dtos.CuentaDTO;
+import minipimplytixinfosquad.entidades.dtos.CuentaNuevaDTO;
 import minipimplytixinfosquad.entidades.entities.Cuenta;
+import minipimplytixinfosquad.entidades.entities.Plan;
+import minipimplytixinfosquad.entidades.controllers.CuentaMapper;
 import minipimplytixinfosquad.entidades.services.CuentaService;
+import minipimplytixinfosquad.entidades.services.PlanService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/cuenta")
@@ -15,24 +22,44 @@ public class CuentaController {
     @Autowired
     private CuentaService cuentaService;
 
+    @Autowired
+    private PlanService planService;
+
     // GET /cuenta
     @GetMapping
-    public ResponseEntity<List<Cuenta>> listarCuentas() {
-        return ResponseEntity.ok(cuentaService.listarCuentas());
+    public ResponseEntity<List<CuentaDTO>> listarCuentas() {
+        List<CuentaDTO> cuentas = cuentaService.listarCuentas().stream()
+                .map(CuentaMapper::toDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(cuentas);
     }
 
     // POST /cuenta
     @PostMapping
-    public ResponseEntity<Cuenta> crearCuenta(@RequestBody Cuenta cuenta) {
-        return ResponseEntity.ok(cuentaService.crearCuenta(cuenta));
+    public ResponseEntity<CuentaDTO> crearCuenta(@RequestBody CuentaNuevaDTO nuevaCuenta) {
+        Plan plan = planService.obtenerPlanPorId(nuevaCuenta.getPlanId())
+                .orElseThrow(() -> new RuntimeException("Plan no encontrado"));
+
+        Cuenta cuenta = CuentaMapper.toEntity(nuevaCuenta, plan);
+        Cuenta creada = cuentaService.crearCuenta(cuenta);
+
+        return ResponseEntity.ok(CuentaMapper.toDTO(creada));
     }
 
     // PUT /cuenta/{idCuenta}
     @PutMapping("/{idCuenta}")
-    public ResponseEntity<Cuenta> actualizarCuenta(
+    public ResponseEntity<CuentaDTO> actualizarCuenta(
             @PathVariable Long idCuenta,
-            @RequestBody Cuenta datosActualizados) {
-        return ResponseEntity.ok(cuentaService.actualizarCuenta(idCuenta, datosActualizados));
+            @RequestBody CuentaNuevaDTO datosActualizados) {
+
+        Plan plan = planService.obtenerPlanPorId(datosActualizados.getPlanId())
+                .orElseThrow(() -> new RuntimeException("Plan no encontrado"));
+
+        Cuenta cuentaActualizada = CuentaMapper.toEntity(datosActualizados, plan);
+        cuentaActualizada.setId(idCuenta); // aseguramos el ID
+
+        Cuenta actualizada = cuentaService.actualizarCuenta(idCuenta, cuentaActualizada);
+        return ResponseEntity.ok(CuentaMapper.toDTO(actualizada));
     }
 
     // DELETE /cuenta/{idCuenta}
