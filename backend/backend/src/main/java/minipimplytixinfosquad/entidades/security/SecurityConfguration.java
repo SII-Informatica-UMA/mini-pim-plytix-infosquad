@@ -3,6 +3,7 @@ package minipimplytixinfosquad.entidades.security;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -33,10 +34,19 @@ public class SecurityConfguration {
             .csrf(cs -> cs.disable())
             .formLogin(formLogin ->formLogin.disable())
             .httpBasic(httpBasic ->httpBasic.disable())
+            /* 
             .authorizeHttpRequests(authorizeRequests ->
                     authorizeRequests
                         .requestMatchers("/sin-auth").permitAll()
                         .anyRequest().authenticated()
+            )
+            */
+            .authorizeHttpRequests(authorize -> authorize
+                .requestMatchers(HttpMethod.GET, "/cuenta/**", "/plan/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_CLIENTE")
+                .requestMatchers(HttpMethod.POST, "/cuenta/**", "/plan/**").hasAuthority("ROLE_ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/cuenta/**", "/plan/**").hasAuthority("ROLE_ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/cuenta/**", "/plan/**").hasAuthority("ROLE_ADMIN")
+                .anyRequest().authenticated()
             )
 
             .sessionManagement(sessionManagement ->
