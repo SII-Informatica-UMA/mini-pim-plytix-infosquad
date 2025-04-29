@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/cuenta")
 public class CuentaController {
-
+    
     @Autowired
     private CuentaService cuentaService;
 
@@ -37,14 +37,23 @@ public class CuentaController {
     // POST /cuenta
     @PostMapping
     public ResponseEntity<CuentaDTO> crearCuenta(@RequestBody CuentaNuevaDTO nuevaCuenta) {
-        Plan plan = planService.obtenerPlanPorId(nuevaCuenta.getPlanId())
-                .orElseThrow(() -> new RuntimeException("Plan no encontrado"));
+        
+        System.out.println("Nueva Cuenta Recibida: " + nuevaCuenta);
+
+        
+        if (nuevaCuenta.getPlan() == null || nuevaCuenta.getPlan().getId() == null) {
+            throw new RuntimeException("Debes proporcionar el ID del plan en el objeto 'plan'.");
+        }
+
+        Plan plan = planService.obtenerPlanPorId(nuevaCuenta.getPlan().getId())
+                .orElseThrow(() -> new RuntimeException("Plan no encontrado con id: " + nuevaCuenta.getPlan().getId()));
 
         Cuenta cuenta = CuentaMapper.toEntity(nuevaCuenta, plan);
-        Cuenta creada = cuentaService.crearCuenta(cuenta);
+        Cuenta cuentaGuardada = cuentaService.crearCuenta(cuenta);
 
-        return ResponseEntity.ok(CuentaMapper.toDTO(creada));
-    }
+        return ResponseEntity.ok(CuentaMapper.toDTO(cuentaGuardada));
+    }  
+
 
     // PUT /cuenta/{idCuenta}
     @PutMapping("/{idCuenta}")
@@ -52,8 +61,14 @@ public class CuentaController {
             @PathVariable Long idCuenta,
             @RequestBody CuentaNuevaDTO datosActualizados) {
 
-        Plan plan = planService.obtenerPlanPorId(datosActualizados.getPlanId())
+                Long planId = (datosActualizados.getPlan() != null) ? datosActualizados.getPlan().getId() : null;
+
+                if (planId == null) {
+                    throw new RuntimeException("El id del plan no puede ser null");
+                }
+                Plan plan = planService.obtenerPlanPorId(planId)
                 .orElseThrow(() -> new RuntimeException("Plan no encontrado"));
+
 
         Cuenta cuentaActualizada = CuentaMapper.toEntity(datosActualizados, plan);
         cuentaActualizada.setId(idCuenta); // aseguramos el ID

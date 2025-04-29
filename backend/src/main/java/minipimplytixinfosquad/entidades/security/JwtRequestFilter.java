@@ -95,10 +95,11 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 UserDetails userDetails = new User(username, "", Collections.singleton(authority));
 
                 if (!jwtTokenUtil.isTokenExpired(jwtToken)) {
-
+                    
                     logger.info("Rol original del token: " + jwtTokenUtil.getRoleFromToken(jwtToken).orElse("NO_ROLE"));
                     logger.info("Rol extraído del token (tras traducción): " + authority.getAuthority());
-                    
+                    logger.info("Authorities del user: " + userDetails.getAuthorities());
+            
                     UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
                         new UsernamePasswordAuthenticationToken(
                             userDetails,
