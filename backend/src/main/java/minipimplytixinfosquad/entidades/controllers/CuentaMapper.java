@@ -19,10 +19,7 @@ public class CuentaMapper {
                 .nombre(cuenta.getNombre())
                 .direccion(cuenta.getDireccion())
                 .nif(cuenta.getNif())
-                .fechaAlta(cuenta.getFechaAlta()
-                        .toInstant()
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDate())
+                .fechaAlta(cuenta.getFechaAlta() != null ? new Date(cuenta.getFechaAlta().getTime()) : null)
                 .plan(PlanDTO.builder()
                         .id(cuenta.getPlan().getId())
                         .nombre(cuenta.getPlan().getNombre())
@@ -49,12 +46,13 @@ public class CuentaMapper {
                     .atStartOfDay(ZoneId.systemDefault())
                     .toInstant()));
         } else {
-            cuenta.setFechaAlta(new Date()); // Si no llega, usa la fecha actual
+            cuenta.setFechaAlta(new Date()); 
         }
 
         cuenta.setPlan(plan);
+        cuenta.setPropietarioId(dto.getPropietarioId());
+        cuenta.setUsuariosIds(dto.getUsuariosIds());     
 
-        // Propietario y usuarios normalmente se tratan aparte
         return cuenta;
     }
 }

@@ -36,20 +36,26 @@ public class CuentaController {
 
     // POST /cuenta
     @PostMapping
-    public ResponseEntity<CuentaDTO> crearCuenta(@RequestBody CuentaNuevaDTO nuevaCuenta) {
-        
+    public ResponseEntity<CuentaDTO> crearCuenta(@RequestBody CuentaNuevaDTO nuevaCuenta, HttpServletRequest request) {
         System.out.println("Nueva Cuenta Recibida: " + nuevaCuenta);
 
-        
         if (nuevaCuenta.getPlan() == null || nuevaCuenta.getPlan().getId() == null) {
             throw new RuntimeException("Debes proporcionar el ID del plan en el objeto 'plan'.");
+        }
+
+        Long idUsuario = (Long) request.getAttribute("idUsuario");
+        if (idUsuario == null) {
+            throw new RuntimeException("ID de usuario no disponible en el token.");
         }
 
         Plan plan = planService.obtenerPlanPorId(nuevaCuenta.getPlan().getId())
                 .orElseThrow(() -> new RuntimeException("Plan no encontrado con id: " + nuevaCuenta.getPlan().getId()));
 
         Cuenta cuenta = CuentaMapper.toEntity(nuevaCuenta, plan);
-        Cuenta cuentaGuardada = cuentaService.crearCuenta(cuenta);
+        cuenta.setPropietarioId(idUsuario);
+        cuenta.setUsuariosIds(List.of(idUsuario)); // también lo añade como usuario
+        
+        Cuenta cuentaGuardada = cuentaService.crearCuenta(cuenta, idUsuario);
 
         return ResponseEntity.ok(CuentaMapper.toDTO(cuentaGuardada));
     }  

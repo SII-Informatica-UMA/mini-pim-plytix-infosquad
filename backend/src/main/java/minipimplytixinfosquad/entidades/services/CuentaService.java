@@ -25,10 +25,12 @@ public class CuentaService {
     }
 
     // POST /cuenta
-    public Cuenta crearCuenta(Cuenta cuenta) {
+    public Cuenta crearCuenta(Cuenta cuenta, Long idUsuario) {
+        cuenta.setPropietarioId(idUsuario);
+        cuenta.setUsuariosIds(List.of(idUsuario));
         return cuentaRepository.save(cuenta);
     }
-
+    
     // PUT /cuenta/{idCuenta}
     public Cuenta actualizarCuenta(Long idCuenta, Cuenta datosActualizados) {
         return cuentaRepository.findById(idCuenta)

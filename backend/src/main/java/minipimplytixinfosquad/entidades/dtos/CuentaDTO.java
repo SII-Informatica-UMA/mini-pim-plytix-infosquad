@@ -3,7 +3,7 @@ package minipimplytixinfosquad.entidades.dtos;
 import lombok.Builder;
 import lombok.Data;
 
-import java.time.LocalDate;
+import java.util.Date;
 
 @Data
 @Builder
@@ -12,6 +12,6 @@ public class CuentaDTO {
     private String nombre;
     private String direccion;
     private String nif;
-    private LocalDate fechaAlta;
+    private Date fechaAlta;
     private PlanDTO plan;
 }

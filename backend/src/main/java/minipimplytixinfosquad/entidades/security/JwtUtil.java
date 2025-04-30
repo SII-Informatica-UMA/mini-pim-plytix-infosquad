@@ -31,6 +31,10 @@ public class JwtUtil {
         return getClaimFromToken(token, Claims::getSubject);
     }
 
+    public Long getUserIdFromToken(String token) {
+        return Long.parseLong(getUsernameFromToken(token));
+    }
+
     //LO HE CAMBIADO
     //extrae el claim "role" del token JWT, lo convierte a string
     //y lo devuelve dentro de un Optional<String> para manejar el 

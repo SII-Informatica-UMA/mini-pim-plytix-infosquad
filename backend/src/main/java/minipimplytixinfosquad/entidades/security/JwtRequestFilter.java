@@ -100,6 +100,9 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                     logger.info("Rol extraído del token (tras traducción): " + authority.getAuthority());
                     logger.info("Authorities del user: " + userDetails.getAuthorities());
             
+                    Long idUsuario = jwtTokenUtil.getUserIdFromToken(jwtToken); // <- este método debes tenerlo en JwtUtil
+                    request.setAttribute("idUsuario", idUsuario); // <-- ESTA LÍNEA ES LA CLAVE
+
                     UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
                         new UsernamePasswordAuthenticationToken(
                             userDetails,
