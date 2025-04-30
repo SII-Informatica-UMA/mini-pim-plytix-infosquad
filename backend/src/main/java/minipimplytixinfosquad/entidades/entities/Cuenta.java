@@ -1,5 +1,6 @@
 package minipimplytixinfosquad.entidades.entities;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -40,7 +41,7 @@ public class Cuenta {
     @ElementCollection
     @CollectionTable(name = "cuenta_usuarios", joinColumns = @JoinColumn(name = "cuenta_id"))
     @Column(name = "usuario_id")
-    private List<Long> usuariosIds;
+    private List<Long> usuariosIds = new ArrayList<>();
 
 }
 

@@ -7,6 +7,7 @@ import minipimplytixinfosquad.entidades.repositories.PlanRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -63,7 +64,14 @@ public class CuentaService {
     public void actualizarPropietario(Long idCuenta, Long nuevoPropietarioId) {
         Cuenta cuenta = cuentaRepository.findById(idCuenta)
                 .orElseThrow(() -> new RuntimeException("Cuenta no encontrada con id: " + idCuenta));
+    
         cuenta.setPropietarioId(nuevoPropietarioId);
+    
+        // Si no está en la lista de usuarios, lo añadimos
+        if (cuenta.getUsuariosIds() == null || !cuenta.getUsuariosIds().contains(nuevoPropietarioId)) {
+            cuenta.getUsuariosIds().add(nuevoPropietarioId);
+        }
+    
         cuentaRepository.save(cuenta);
     }
 
@@ -78,7 +86,8 @@ public class CuentaService {
     public void actualizarUsuarios(Long idCuenta, List<Long> nuevosUsuarios) {
         Cuenta cuenta = cuentaRepository.findById(idCuenta)
                 .orElseThrow(() -> new RuntimeException("Cuenta no encontrada con id: " + idCuenta));
-        cuenta.setUsuariosIds(nuevosUsuarios);
+        //cuenta.setUsuariosIds(nuevosUsuarios);
+        cuenta.setUsuariosIds(new ArrayList<>(nuevosUsuarios));
         cuentaRepository.save(cuenta);
     }
 
