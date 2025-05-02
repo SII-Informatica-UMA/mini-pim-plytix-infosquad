@@ -1,7 +1,9 @@
 package minipimplytixinfosquad.entidades.services;
 
+import minipimplytixinfosquad.entidades.clients.ProductosClient;
 import minipimplytixinfosquad.entidades.entities.Cuenta;
 import minipimplytixinfosquad.entidades.entities.Plan;
+import minipimplytixinfosquad.entidades.exceptions.CuentaConRecursosException;
 import minipimplytixinfosquad.entidades.repositories.CuentaRepository;
 import minipimplytixinfosquad.entidades.repositories.PlanRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,9 @@ public class CuentaService {
 
     @Autowired
     private PlanRepository planRepository;
+
+    @Autowired
+    private ProductosClient productosClient;
 
     // GET /cuenta
     public List<Cuenta> listarCuentas() {
@@ -94,6 +99,20 @@ public class CuentaService {
     // (opcional) para usar desde los controladores si necesitas cargar una cuenta con seguridad
     public Optional<Cuenta> obtenerCuentaPorId(Long idCuenta) {
         return cuentaRepository.findById(idCuenta);
+    }
+
+    /* --- nuevo método --- */
+    public void eliminarCuentaSiNoTieneRecursos(Long idCuenta, String jwt) {
+
+        if (productosClient.cuentaTieneProductos(idCuenta, jwt) ||
+            productosClient.cuentaTieneCategorias(idCuenta, jwt) ||
+            productosClient.cuentaTieneRelaciones(idCuenta, jwt) ||
+            productosClient.cuentaTieneActivos(idCuenta, jwt)) {
+
+            throw new CuentaConRecursosException();   // ← provoca 403 en el controller
+        }
+
+        cuentaRepository.deleteById(idCuenta);
     }
 }
 
