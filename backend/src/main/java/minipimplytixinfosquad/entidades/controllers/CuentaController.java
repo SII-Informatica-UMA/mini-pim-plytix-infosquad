@@ -116,13 +116,6 @@ public class CuentaController {
         }
     }
 
-    // GET /cuenta/{idCuenta}/propietario
-    /* 
-    @GetMapping("/{idCuenta}/propietario")
-    public ResponseEntity<Long> obtenerPropietario(@PathVariable Long idCuenta) {
-        return ResponseEntity.ok(cuentaService.obtenerPropietario(idCuenta));
-    }
-        */
 
     @GetMapping("/{idCuenta}/propietario")
     public ResponseEntity<?> obtenerPropietario(
@@ -138,16 +131,25 @@ public class CuentaController {
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
         boolean esAutorizado = esAdmin || cuenta.getUsuariosIds().contains(usuarioActualId);
-
         if (!esAutorizado) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         String token = extraerTokenDeRequest(request);
-        UsuarioResumenDTO propietario = usuarioClient.obtenerUsuarioPorId(cuenta.getPropietarioId(), token);
+        UsuarioResumenDTO propietario = usuarioClient
+                .obtenerUsuarioPorId(cuenta.getPropietarioId(), token);
 
-        return ResponseEntity.ok(propietario);
+        // ── Mapear a UsuarioBasicoDTO ─────────────────────────────────────────
+        UsuarioBasicoDTO dto = new UsuarioBasicoDTO();
+        dto.setId(propietario.getId());
+        dto.setEmail(propietario.getEmail());
+        dto.setNombre(propietario.getNombre());
+        dto.setApellido1(propietario.getApellido1());
+        dto.setApellido2(propietario.getApellido2());
+
+        return ResponseEntity.ok(dto);      // ← sin el campo role
     }
+
 
     private String extraerTokenDeRequest(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
@@ -157,132 +159,97 @@ public class CuentaController {
         throw new RuntimeException("No se proporcionó token de autorización.");
     }
 
-    // POST /cuenta/{idCuenta}/propietario
-    /* 
-    @PostMapping("/{idCuenta}/propietario")
-    public ResponseEntity<Void> actualizarPropietario(
-            @PathVariable Long idCuenta,
-            @RequestBody Long nuevoPropietarioId) {
-        cuentaService.actualizarPropietario(idCuenta, nuevoPropietarioId);
-        return ResponseEntity.noContent().build();
-    }
-    */
+
     @PostMapping("/{idCuenta}/propietario")
     public ResponseEntity<?> actualizarPropietario(
             @PathVariable Long idCuenta,
             @RequestBody NuevoPropietarioDTO dto,
             HttpServletRequest request) {
 
-        // 1. Solo ADMIN → ya está cubierto por SecurityFilterChain
-        //    (POST /cuenta/** requiere ROLE_ADMIN).
+        // 1) Seguridad: ya forzada a ROLE_ADMIN por la SecurityFilterChain
 
-        // 2. Resolver el nuevo propietario (por id o email)
+        // 2) Resolver nuevo propietario
         String token = extraerTokenDeRequest(request);
 
-        UsuarioResumenDTO nuevoProp;
         if (dto.getId() == null || dto.getEmail() == null || dto.getEmail().isBlank()) {
             return ResponseEntity.badRequest().body("Debes proporcionar id y email");
         }
 
+        UsuarioResumenDTO nuevoProp;
         try {
             nuevoProp = usuarioClient.obtenerUsuarioPorId(dto.getId(), token);
 
-            // Verificamos que el email coincide con el ID
+            // Verificar consistencia email-id
             if (!dto.getEmail().equalsIgnoreCase(nuevoProp.getEmail())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("El ID y el email no coinciden");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                                    .body("El ID y el email no coinciden");
             }
-
         } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Usuario no encontrado");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                                .body("Usuario no encontrado");
         }
 
-        // 3. Actualizar la cuenta
+        // 3) Actualizar cuenta
         cuentaService.actualizarPropietario(idCuenta, nuevoProp.getId());
 
-        // 4. Devolver los datos completos del propietario
-        return ResponseEntity.ok(nuevoProp);
-    }
+        // 4) Mapear a UsuarioBasicoDTO (sin 'role') para la salida
+        UsuarioBasicoDTO salida = new UsuarioBasicoDTO();
+        salida.setId(nuevoProp.getId());
+        salida.setEmail(nuevoProp.getEmail());
+        salida.setNombre(nuevoProp.getNombre());
+        salida.setApellido1(nuevoProp.getApellido1());
+        salida.setApellido2(nuevoProp.getApellido2());
 
+        return ResponseEntity.ok(salida);          // ← sin campo role
+    }
 
     // GET /cuenta/{idCuenta}/usuarios
     @GetMapping("/{idCuenta}/usuarios")
-public ResponseEntity<?> obtenerUsuarios(
-        @PathVariable Long idCuenta,
-        HttpServletRequest request) {
+    public ResponseEntity<?> obtenerUsuarios(
+            @PathVariable Long idCuenta,
+            HttpServletRequest request) {
 
-    // ── Seguridad: solo ADMIN o PROPIETARIO ────────────────────────────────
-    Long usuarioActualId = obtenerIdUsuarioActual();
-    Cuenta cuenta = cuentaService.obtenerCuentaPorId(idCuenta)
-            .orElseThrow(() -> new RuntimeException("Cuenta no encontrada"));
+        // ── Seguridad: solo ADMIN o PROPIETARIO ────────────────────────────────
+        Long usuarioActualId = obtenerIdUsuarioActual();
+        Cuenta cuenta = cuentaService.obtenerCuentaPorId(idCuenta)
+                .orElseThrow(() -> new RuntimeException("Cuenta no encontrada"));
 
-    boolean esAdmin = SecurityContextHolder.getContext().getAuthentication()
-            .getAuthorities().stream()
-            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        boolean esAdmin = SecurityContextHolder.getContext().getAuthentication()
+                .getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-    boolean esPropietario = cuenta.getPropietarioId() != null &&
-                            cuenta.getPropietarioId().equals(usuarioActualId);
+        boolean esPropietario = cuenta.getPropietarioId() != null &&
+                                cuenta.getPropietarioId().equals(usuarioActualId);
 
-    if (!esAdmin && !esPropietario) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-    }
-
-    // ── 1) Lista FINAL de IDs  (siempre incluye al propietario) ────────────
-    Set<Long> idsUnicos = new HashSet<>(cuenta.getUsuariosIds());   // los que hay en BBDD
-    idsUnicos.add(cuenta.getPropietarioId());                       // asegura propietario
-
-    // ── 2) Consultamos microservicio Usuarios para cada ID ────────────────
-    String token = extraerTokenDeRequest(request);
-    List<UsuarioBasicoDTO> usuarios = new ArrayList<>();
-
-    for (Long id : idsUnicos) {
-        try {
-            UsuarioResumenDTO u = usuarioClient.obtenerUsuarioPorId(id, token);
-
-            // Convertir a UsuarioBasicoDTO para ocultar 'role'
-            UsuarioBasicoDTO dto = new UsuarioBasicoDTO();
-            dto.setId(u.getId());
-            dto.setEmail(u.getEmail());
-            dto.setNombre(u.getNombre());
-            dto.setApellido1(u.getApellido1());
-            dto.setApellido2(u.getApellido2());
-
-            usuarios.add(dto);
-
-        } catch (Exception ex) {
-            // Si un usuario no existe → 403 como dicta el Swagger
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                   .body("Usuario con id " + id + " no encontrado");
+        if (!esAdmin && !esPropietario) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-    }
 
-    return ResponseEntity.ok(usuarios);     // 200  ✓ todos los usuarios
-}
+        // ── 1) Lista FINAL de IDs  (siempre incluye al propietario) ────────────
+        Set<Long> idsUnicos = new HashSet<>(cuenta.getUsuariosIds());   // los que hay en BBDD
+        idsUnicos.add(cuenta.getPropietarioId());                       // asegura propietario
+
+        // ── 2) Consultamos microservicio Usuarios para cada ID ────────────────
+        String token = extraerTokenDeRequest(request);
+        
+        List<UsuarioResumenDTO> datosCompletos = usuarioClient
+        .obtenerUsuariosPorIds(new ArrayList<>(idsUnicos), token);
+
+        List<UsuarioBasicoDTO> usuarios = datosCompletos.stream()
+                .map(u -> {
+                    UsuarioBasicoDTO dto = new UsuarioBasicoDTO();
+                    dto.setId(u.getId());
+                    dto.setEmail(u.getEmail());
+                    dto.setNombre(u.getNombre());
+                    dto.setApellido1(u.getApellido1());
+                    dto.setApellido2(u.getApellido2());
+                    return dto;
+                })
+                .toList();
+        return ResponseEntity.ok(usuarios);     // 200  ✓ todos los usuarios
+    }
 
     // POST /cuenta/{idCuenta}/usuarios
-    /* 
-    @PostMapping("/{idCuenta}/usuarios")
-    public ResponseEntity<Void> actualizarUsuarios(
-            @PathVariable Long idCuenta,
-            @RequestBody List<Long> nuevosUsuarios) {
-        cuentaService.actualizarUsuarios(idCuenta, nuevosUsuarios);
-        return ResponseEntity.noContent().build();
-    }
-    
-    @PostMapping("/{idCuenta}/usuarios")
-    public ResponseEntity<?> actualizarUsuarios(
-            @PathVariable Long idCuenta,
-            @RequestBody List<UsuarioDTO> nuevosUsuarios) {
-
-        List<Long> ids = nuevosUsuarios.stream()
-                .map(UsuarioDTO::getId)
-                .toList();
-
-        cuentaService.actualizarUsuarios(idCuenta, ids);
-
-        // De momento devolvemos los mismos usuarios. Luego puedes hacer llamadas al microservicio para completarlos.
-        return ResponseEntity.ok(nuevosUsuarios);
-    }
-    */
     @PostMapping("/{idCuenta}/usuarios")
     public ResponseEntity<?> actualizarUsuarios(
             @PathVariable Long idCuenta,

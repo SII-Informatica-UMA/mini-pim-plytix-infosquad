@@ -72,7 +72,6 @@ public class CuentaService {
     
         cuenta.setPropietarioId(nuevoPropietarioId);
     
-        // Si no está en la lista de usuarios, lo añadimos
         if (cuenta.getUsuariosIds() == null || !cuenta.getUsuariosIds().contains(nuevoPropietarioId)) {
             cuenta.getUsuariosIds().add(nuevoPropietarioId);
         }
@@ -87,21 +86,27 @@ public class CuentaService {
                 .orElseThrow(() -> new RuntimeException("Cuenta no encontrada con id: " + idCuenta));
     }
 
-    // POST /cuenta/{idCuenta}/usuarios
     public void actualizarUsuarios(Long idCuenta, List<Long> nuevosUsuarios) {
         Cuenta cuenta = cuentaRepository.findById(idCuenta)
                 .orElseThrow(() -> new RuntimeException("Cuenta no encontrada con id: " + idCuenta));
-        //cuenta.setUsuariosIds(nuevosUsuarios);
-        cuenta.setUsuariosIds(new ArrayList<>(nuevosUsuarios));
+    
+        // Siempre incluye al propietario
+        Long propietarioId = cuenta.getPropietarioId();
+        List<Long> listaFinal = new ArrayList<>(nuevosUsuarios);
+    
+        if (propietarioId != null && !listaFinal.contains(propietarioId)) {
+            listaFinal.add(propietarioId);
+        }
+    
+        cuenta.setUsuariosIds(listaFinal);
         cuentaRepository.save(cuenta);
     }
 
-    // (opcional) para usar desde los controladores si necesitas cargar una cuenta con seguridad
     public Optional<Cuenta> obtenerCuentaPorId(Long idCuenta) {
         return cuentaRepository.findById(idCuenta);
     }
 
-    /* --- nuevo método --- */
+    
     public void eliminarCuentaSiNoTieneRecursos(Long idCuenta, String jwt) {
 
         if (productosClient.cuentaTieneProductos(idCuenta, jwt) ||
@@ -109,7 +114,7 @@ public class CuentaService {
             productosClient.cuentaTieneRelaciones(idCuenta, jwt) ||
             productosClient.cuentaTieneActivos(idCuenta, jwt)) {
 
-            throw new CuentaConRecursosException();   // ← provoca 403 en el controller
+            throw new CuentaConRecursosException();  
         }
 
         cuentaRepository.deleteById(idCuenta);

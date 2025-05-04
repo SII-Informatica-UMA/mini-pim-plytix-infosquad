@@ -53,35 +53,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            /* 
-            //LO HE CAMBIADO
-            var authorities = jwtTokenUtil.getRoleFromToken(jwtToken)
-                .map(SimpleGrantedAuthority::new)
-                .stream().collect(Collectors.toSet());
-            */
-            /* 
-            var authorities = jwtTokenUtil.getRoleFromToken(jwtToken)
-                .map(role -> {
-                    // Traducción segura de ADMINISTRADOR → ADMIN
-                    if ("ADMINISTRADOR".equalsIgnoreCase(role)) return "ADMIN";
-                    return role;
-                })
-                .map(SimpleGrantedAuthority::new)
-                .map(Collections::singleton)
-                .orElse(Collections.emptySet());
-
-                UserDetails userDetails = new User(username, "", authorities);
-            */
-
-            /* 
-            var authority = jwtTokenUtil.getRoleFromToken(jwtToken)
-                .map(role -> {
-                    if ("ADMINISTRADOR".equalsIgnoreCase(role)) return "ADMIN";
-                    return role;
-                })
-                .map(SimpleGrantedAuthority::new)
-                .orElse(null);
-            */
+            
             var authority = jwtTokenUtil.getRoleFromToken(jwtToken)
                 .map(role -> {
                     if ("ADMINISTRADOR".equalsIgnoreCase(role)) return "ROLE_ADMIN";
@@ -115,20 +87,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                     logger.debug("Token no válido");
                 }
             }
-
-            /* 
-            if (!jwtTokenUtil.isTokenExpired(jwtToken)) {
-                UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
-                    userDetails, userDetails.getPassword(), userDetails.getAuthorities());
-                usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                logger.debug("usernamePasswordAuthenticationToken = " + usernamePasswordAuthenticationToken);
-                SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
-            } else {
-                logger.debug("Token no válido");
-            }
-
-            */
         }
         // A la ida
 

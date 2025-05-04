@@ -62,16 +62,23 @@ public class UsuarioClient {
     }
 
     public List<UsuarioResumenDTO> obtenerUsuariosPorIds(List<Long> ids, String jwt) {
-        return ids.stream()
+        for (Long id : ids) {
+            if (id == null) {
+                throw new IllegalArgumentException("ID de usuario no puede ser null");
+            }
+        }
+    
+        List<UsuarioResumenDTO> usuarios = ids.stream()
             .map(id -> {
                 try {
                     return obtenerUsuarioPorId(id, jwt);
                 } catch (Exception e) {
-                    System.err.println("No se pudo obtener el usuario con ID: " + id);
-                    return null;
+                    throw new RuntimeException("Usuario con ID " + id + " no encontrado");
                 }
             })
-            .filter(u -> u != null)
             .toList();
+    
+        return usuarios;
     }
+    
 }
