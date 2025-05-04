@@ -34,13 +34,7 @@ public class SecurityConfguration {
             .csrf(cs -> cs.disable())
             .formLogin(formLogin ->formLogin.disable())
             .httpBasic(httpBasic ->httpBasic.disable())
-            /* 
-            .authorizeHttpRequests(authorizeRequests ->
-                    authorizeRequests
-                        .requestMatchers("/sin-auth").permitAll()
-                        .anyRequest().authenticated()
-            )
-            */
+            
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers(HttpMethod.GET, "/cuenta/**", "/plan/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_CLIENTE")
                 .requestMatchers(HttpMethod.POST, "/cuenta/**", "/plan/**").hasAuthority("ROLE_ADMIN")

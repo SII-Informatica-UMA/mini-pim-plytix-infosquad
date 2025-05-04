@@ -70,27 +70,6 @@ public class JwtUtil {
         return expiration.before(new Date());
     }
 
-    //ESTE MICROSERVICIO NO GENERA TOKENS, ESO LO HACE USUARIOS
-    /* 
-    public String generateToken(Usuario usuario) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("role", usuario.getRole());
-        return doGenerateToken(claims, usuario.getId().toString());
-    }
-        
 
-    private String doGenerateToken(Map<String, Object> claims, String subject) {
-        byte[] keyBytes = secret.getBytes();
-        Key key = Keys.hmacShaKeyFor(keyBytes);
-
-        return Jwts.builder()
-            .setClaims(claims)
-            .setSubject(subject)
-            .setIssuedAt(new Date(System.currentTimeMillis()))
-            .setExpiration(new Date(System.currentTimeMillis() + tokenValidity * 1000))
-            .signWith(key, SignatureAlgorithm.HS512).compact();
-    }
-
-    */
 
 }
