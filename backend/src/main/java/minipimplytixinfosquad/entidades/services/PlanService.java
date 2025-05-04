@@ -46,7 +46,6 @@ public class PlanService {
         planRepository.deleteById(idPlan);
     }
 
-    // (opcional) para usar en controladores si necesitas consultar un plan
     public Optional<Plan> obtenerPlanPorId(Long idPlan) {
         return planRepository.findById(idPlan);
     }

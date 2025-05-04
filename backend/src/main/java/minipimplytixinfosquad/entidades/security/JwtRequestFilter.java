@@ -35,8 +35,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
         String username = null;
         String jwtToken = null;
-        // JWT Token viene en la forma de "Bearer token". Eliminamos el término Bearer del inicio
-        // para obtener solo el token
+        
         if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
             jwtToken = requestTokenHeader.substring(7);
             try {
@@ -72,8 +71,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                     logger.info("Rol extraído del token (tras traducción): " + authority.getAuthority());
                     logger.info("Authorities del user: " + userDetails.getAuthorities());
             
-                    Long idUsuario = jwtTokenUtil.getUserIdFromToken(jwtToken); // <- este método debes tenerlo en JwtUtil
-                    request.setAttribute("idUsuario", idUsuario); // <-- ESTA LÍNEA ES LA CLAVE
+                    Long idUsuario = jwtTokenUtil.getUserIdFromToken(jwtToken); 
+                    request.setAttribute("idUsuario", idUsuario); 
 
                     UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
                         new UsernamePasswordAuthenticationToken(
@@ -88,11 +87,11 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 }
             }
         }
-        // A la ida
+       
 
         chain.doFilter(request, response);
 
-        // A la vuelta
+    
     }
 
 }

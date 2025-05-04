@@ -69,7 +69,7 @@ public class CuentaController {
 
         Cuenta cuenta = CuentaMapper.toEntity(nuevaCuenta, plan);
         cuenta.setPropietarioId(idUsuario);
-        cuenta.setUsuariosIds(List.of(idUsuario)); // también lo añade como usuario
+        cuenta.setUsuariosIds(List.of(idUsuario)); //lo añade como usuario
         
         Cuenta cuentaGuardada = cuentaService.crearCuenta(cuenta, idUsuario);
 
@@ -139,7 +139,7 @@ public class CuentaController {
         UsuarioResumenDTO propietario = usuarioClient
                 .obtenerUsuarioPorId(cuenta.getPropietarioId(), token);
 
-        // ── Mapear a UsuarioBasicoDTO ─────────────────────────────────────────
+        
         UsuarioBasicoDTO dto = new UsuarioBasicoDTO();
         dto.setId(propietario.getId());
         dto.setEmail(propietario.getEmail());
@@ -147,7 +147,7 @@ public class CuentaController {
         dto.setApellido1(propietario.getApellido1());
         dto.setApellido2(propietario.getApellido2());
 
-        return ResponseEntity.ok(dto);      // ← sin el campo role
+        return ResponseEntity.ok(dto);     
     }
 
 
@@ -166,9 +166,6 @@ public class CuentaController {
             @RequestBody NuevoPropietarioDTO dto,
             HttpServletRequest request) {
 
-        // 1) Seguridad: ya forzada a ROLE_ADMIN por la SecurityFilterChain
-
-        // 2) Resolver nuevo propietario
         String token = extraerTokenDeRequest(request);
 
         if (dto.getId() == null || dto.getEmail() == null || dto.getEmail().isBlank()) {
@@ -189,10 +186,10 @@ public class CuentaController {
                                 .body("Usuario no encontrado");
         }
 
-        // 3) Actualizar cuenta
+        
         cuentaService.actualizarPropietario(idCuenta, nuevoProp.getId());
 
-        // 4) Mapear a UsuarioBasicoDTO (sin 'role') para la salida
+       
         UsuarioBasicoDTO salida = new UsuarioBasicoDTO();
         salida.setId(nuevoProp.getId());
         salida.setEmail(nuevoProp.getEmail());
@@ -200,7 +197,7 @@ public class CuentaController {
         salida.setApellido1(nuevoProp.getApellido1());
         salida.setApellido2(nuevoProp.getApellido2());
 
-        return ResponseEntity.ok(salida);          // ← sin campo role
+        return ResponseEntity.ok(salida);         
     }
 
     // GET /cuenta/{idCuenta}/usuarios
@@ -209,7 +206,6 @@ public class CuentaController {
             @PathVariable Long idCuenta,
             HttpServletRequest request) {
 
-        // ── Seguridad: solo ADMIN o PROPIETARIO ────────────────────────────────
         Long usuarioActualId = obtenerIdUsuarioActual();
         Cuenta cuenta = cuentaService.obtenerCuentaPorId(idCuenta)
                 .orElseThrow(() -> new RuntimeException("Cuenta no encontrada"));
@@ -225,11 +221,11 @@ public class CuentaController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        // ── 1) Lista FINAL de IDs  (siempre incluye al propietario) ────────────
-        Set<Long> idsUnicos = new HashSet<>(cuenta.getUsuariosIds());   // los que hay en BBDD
-        idsUnicos.add(cuenta.getPropietarioId());                       // asegura propietario
+        
+        Set<Long> idsUnicos = new HashSet<>(cuenta.getUsuariosIds());   
+        idsUnicos.add(cuenta.getPropietarioId());                       
 
-        // ── 2) Consultamos microservicio Usuarios para cada ID ────────────────
+        
         String token = extraerTokenDeRequest(request);
         
         List<UsuarioResumenDTO> datosCompletos = usuarioClient
@@ -246,7 +242,7 @@ public class CuentaController {
                     return dto;
                 })
                 .toList();
-        return ResponseEntity.ok(usuarios);     // 200  ✓ todos los usuarios
+        return ResponseEntity.ok(usuarios);    
     }
 
     // POST /cuenta/{idCuenta}/usuarios
@@ -256,7 +252,7 @@ public class CuentaController {
             @RequestBody List<UsuarioDTO> nuevosUsuarios,
             HttpServletRequest request) {
 
-        // 0) Seguridad: ADMIN o propietario
+        
         Long usuarioActualId = obtenerIdUsuarioActual();
         Cuenta cuenta = cuentaService.obtenerCuentaPorId(idCuenta)
                 .orElseThrow(() -> new RuntimeException("Cuenta no encontrada"));
@@ -272,7 +268,7 @@ public class CuentaController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        // 1) Resolvemos todos los usuarios (id/email) contra microservicio Usuarios
+        
         String token = extraerTokenDeRequest(request);
 
         List<UsuarioResumenDTO> usuariosResolvidos = new ArrayList<>();
@@ -287,7 +283,7 @@ public class CuentaController {
             try {
                 if (dto.getId() != null) {
                     usr = usuarioClient.obtenerUsuarioPorId(dto.getId(), token);
-                    // si además viene email, comprobamos que coincide
+                    
                     if (dto.getEmail() != null &&
                         !dto.getEmail().equalsIgnoreCase(usr.getEmail())) {
                         return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -304,18 +300,18 @@ public class CuentaController {
             usuariosResolvidos.add(usr);
         }
 
-        // 2) Nos aseguramos de que el propietario sigue en la lista
+        
         boolean propietarioIncluido = usuariosResolvidos.stream()
                 .anyMatch(u -> u.getId().equals(cuenta.getPropietarioId()));
 
         if (!propietarioIncluido) {
-            // lo añadimos automáticamente
+            
             UsuarioResumenDTO propietario = usuarioClient
                     .obtenerUsuarioPorId(cuenta.getPropietarioId(), token);
             usuariosResolvidos.add(propietario);
         }
 
-        // 3) Actualizamos la cuenta con la lista de IDs
+        
         List<Long> idsFinales = usuariosResolvidos.stream()
                 .map(UsuarioResumenDTO::getId)
                 .distinct()
@@ -323,7 +319,7 @@ public class CuentaController {
 
         cuentaService.actualizarUsuarios(idCuenta, idsFinales);
 
-        // 4) Convertimos a UsuarioBasicoDTO (sin role) para la respuesta
+        
         List<UsuarioBasicoDTO> salida = usuariosResolvidos.stream()
                 .map(u -> {
                     UsuarioBasicoDTO b = new UsuarioBasicoDTO();
@@ -341,7 +337,7 @@ public class CuentaController {
 
     private Long obtenerIdUsuarioActual() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String username = auth.getName(); // En tu caso, parece que el username es el ID del usuario como string
+        String username = auth.getName(); 
         return Long.parseLong(username);
     }
 

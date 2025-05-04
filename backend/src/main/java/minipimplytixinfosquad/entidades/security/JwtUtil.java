@@ -26,7 +26,7 @@ public class JwtUtil {
     @Value("${jwt.token.validity}")
     private long tokenValidity;
 
-    //retrieve username from jwt token
+    
     public String getUsernameFromToken(String token) {
         return getClaimFromToken(token, Claims::getSubject);
     }
@@ -35,10 +35,7 @@ public class JwtUtil {
         return Long.parseLong(getUsernameFromToken(token));
     }
 
-    //LO HE CAMBIADO
-    //extrae el claim "role" del token JWT, lo convierte a string
-    //y lo devuelve dentro de un Optional<String> para manejar el 
-    //caso en el que no exista o falle
+    
     public Optional<String> getRoleFromToken(String token) {
         try {
             return Optional.ofNullable(getAllClaimsFromToken(token).get("role"))
@@ -47,8 +44,7 @@ public class JwtUtil {
             return Optional.empty();
         }
     }
-
-    //retrieve expiration date from jwt token
+ 
     public Date getExpirationDateFromToken(String token) {
         return getClaimFromToken(token, Claims::getExpiration);
     }
@@ -64,7 +60,6 @@ public class JwtUtil {
         return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
     }
 
-    //check if the token has expired
     public Boolean isTokenExpired(String token) {
         final Date expiration = getExpirationDateFromToken(token);
         return expiration.before(new Date());

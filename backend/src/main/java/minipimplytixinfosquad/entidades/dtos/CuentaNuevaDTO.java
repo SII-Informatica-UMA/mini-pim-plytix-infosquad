@@ -12,14 +12,14 @@ public class CuentaNuevaDTO {
     private String direccion;
     private String nif;
     private LocalDate fechaAlta;
-    private PlanIdDTO plan;    //Aquí ahora es un objeto "plan" con un "id" dentro
+    private PlanIdDTO plan;    
     private Long propietarioId;
     private List<Long> usuariosIds;
 
     @Data
     @Builder
     public static class PlanIdDTO {
-        private Long id; // Solo contiene el ID del plan
+        private Long id; 
     }
 
     public Long getPlanId() {
