@@ -28,7 +28,7 @@ public class Plan {
     private Integer maxRelaciones;
     private Number precio;
 
-    // ✅ Relación inversa: un Plan tiene muchas Cuentas
+    // Relación inversa: un Plan tiene muchas Cuentas
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL)
     private List<Cuenta> cuentas;
 }

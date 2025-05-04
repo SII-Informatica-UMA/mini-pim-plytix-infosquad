@@ -117,12 +117,6 @@ public class CuentaController {
     }
 
     // GET /cuenta/{idCuenta}/propietario
-    /* 
-    @GetMapping("/{idCuenta}/propietario")
-    public ResponseEntity<Long> obtenerPropietario(@PathVariable Long idCuenta) {
-        return ResponseEntity.ok(cuentaService.obtenerPropietario(idCuenta));
-    }
-        */
 
     @GetMapping("/{idCuenta}/propietario")
     public ResponseEntity<?> obtenerPropietario(
@@ -158,15 +152,6 @@ public class CuentaController {
     }
 
     // POST /cuenta/{idCuenta}/propietario
-    /* 
-    @PostMapping("/{idCuenta}/propietario")
-    public ResponseEntity<Void> actualizarPropietario(
-            @PathVariable Long idCuenta,
-            @RequestBody Long nuevoPropietarioId) {
-        cuentaService.actualizarPropietario(idCuenta, nuevoPropietarioId);
-        return ResponseEntity.noContent().build();
-    }
-    */
     @PostMapping("/{idCuenta}/propietario")
     public ResponseEntity<?> actualizarPropietario(
             @PathVariable Long idCuenta,
@@ -259,30 +244,6 @@ public ResponseEntity<?> obtenerUsuarios(
 }
 
     // POST /cuenta/{idCuenta}/usuarios
-    /* 
-    @PostMapping("/{idCuenta}/usuarios")
-    public ResponseEntity<Void> actualizarUsuarios(
-            @PathVariable Long idCuenta,
-            @RequestBody List<Long> nuevosUsuarios) {
-        cuentaService.actualizarUsuarios(idCuenta, nuevosUsuarios);
-        return ResponseEntity.noContent().build();
-    }
-    
-    @PostMapping("/{idCuenta}/usuarios")
-    public ResponseEntity<?> actualizarUsuarios(
-            @PathVariable Long idCuenta,
-            @RequestBody List<UsuarioDTO> nuevosUsuarios) {
-
-        List<Long> ids = nuevosUsuarios.stream()
-                .map(UsuarioDTO::getId)
-                .toList();
-
-        cuentaService.actualizarUsuarios(idCuenta, ids);
-
-        // De momento devolvemos los mismos usuarios. Luego puedes hacer llamadas al microservicio para completarlos.
-        return ResponseEntity.ok(nuevosUsuarios);
-    }
-    */
     @PostMapping("/{idCuenta}/usuarios")
     public ResponseEntity<?> actualizarUsuarios(
             @PathVariable Long idCuenta,
