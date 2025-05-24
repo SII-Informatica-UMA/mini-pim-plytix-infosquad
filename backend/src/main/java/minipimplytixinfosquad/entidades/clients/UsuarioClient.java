@@ -5,80 +5,92 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.DefaultUriBuilderFactory;
 import org.springframework.web.util.UriUtils;
 
+import lombok.RequiredArgsConstructor;
+
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class UsuarioClient {
 
-    private final RestTemplate restTemplate = new RestTemplate();
-
     @Value("${usuarios.base-url}")
-    private String usuariosBaseUrl;
+    private String baseUrl;
 
+    private final RestTemplate restTemplate = new RestTemplate();
+    private final DefaultUriBuilderFactory ubf = new DefaultUriBuilderFactory();  // factoría reaprovechable
+
+    /* --- GET /usuario?id=... --------------------------------------------- */
     public UsuarioResumenDTO obtenerUsuarioPorId(Long id, String jwt) {
-        String url = usuariosBaseUrl + "/usuario?id=" + id;
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + jwt);
-        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        URI uri = ubf.builder()
+                     .scheme("https")
+                     .host(baseUrl.replace("https://", ""))   // «mallba3.lcc.uma.es»
+                     .path("/usuario")
+                     .queryParam("id", id)
+                     .build();
 
-        HttpEntity<?> entity = new HttpEntity<>(headers);
+        RequestEntity<Void> rq = RequestEntity.get(uri)
+                .header("Authorization", "Bearer "+jwt)
+                .accept(MediaType.APPLICATION_JSON)
+                .build();
 
-        ResponseEntity<UsuarioResumenDTO[]> response = restTemplate.exchange(
-            url, HttpMethod.GET, entity, UsuarioResumenDTO[].class);
+        ResponseEntity<UsuarioResumenDTO[]> rs =
+                restTemplate.exchange(rq, UsuarioResumenDTO[].class);
 
-        if (response.getStatusCode() == HttpStatus.OK &&
-            response.getBody() != null &&
-            response.getBody().length > 0) {
-            return response.getBody()[0];
-        } else {
-            throw new RuntimeException("No se pudo obtener información del usuario con ID " + id);
-        }
+        if (rs.getStatusCode() == HttpStatus.OK &&
+            rs.getBody()           != null     &&
+            rs.getBody().length    >  0)
+            return rs.getBody()[0];
+
+        throw new RuntimeException("Usuario "+id+" no encontrado");
     }
 
+    /* --- GET /usuario?email=... ------------------------------------------ */
     public UsuarioResumenDTO obtenerUsuarioPorEmail(String email, String jwt) {
+
+         
+        URI uri = ubf.builder()
+                     .scheme("https")
+                     .host(baseUrl.replace("https://", ""))
+                     .path("/usuario")
+                     .queryParam("email", email)
+                     .build();
+        
+
+        /* 
         String encodedEmail = UriUtils.encode(email, StandardCharsets.UTF_8);
-        String url = usuariosBaseUrl + "/usuario?email=" + encodedEmail;
+        URI uri = ubf.builder()
+                    .scheme("https")
+                    .host(baseUrl.replace("https://", ""))
+                    .path("/usuario")
+                    .queryParam("email", encodedEmail) // codificado manualmente
+                    .build();
+        */
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + jwt);
-        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        RequestEntity<Void> rq = RequestEntity.get(uri)
+                .header("Authorization", "Bearer "+jwt)
+                .accept(MediaType.APPLICATION_JSON)
+                .build();
 
-        HttpEntity<?> entity = new HttpEntity<>(headers);
+        ResponseEntity<UsuarioResumenDTO[]> rs =
+                restTemplate.exchange(rq, UsuarioResumenDTO[].class);
 
-        ResponseEntity<UsuarioResumenDTO[]> response = restTemplate.exchange(
-            url, HttpMethod.GET, entity, UsuarioResumenDTO[].class);
+        if (rs.getStatusCode() == HttpStatus.OK &&
+            rs.getBody() != null && rs.getBody().length > 0)
+            return rs.getBody()[0];
 
-        if (response.getStatusCode() == HttpStatus.OK &&
-            response.getBody() != null &&
-            response.getBody().length > 0) {
-            return response.getBody()[0];
-        } else {
-            throw new RuntimeException("No se pudo obtener información del usuario con email: " + email);
-        }
+        throw new RuntimeException("Usuario con email "+email+" no encontrado");
     }
 
+    /* --- Lista de IDs usando stream interno -------------------------------- */
     public List<UsuarioResumenDTO> obtenerUsuariosPorIds(List<Long> ids, String jwt) {
-        for (Long id : ids) {
-            if (id == null) {
-                throw new IllegalArgumentException("ID de usuario no puede ser null");
-            }
-        }
-    
-        List<UsuarioResumenDTO> usuarios = ids.stream()
-            .map(id -> {
-                try {
-                    return obtenerUsuarioPorId(id, jwt);
-                } catch (Exception e) {
-                    throw new RuntimeException("Usuario con ID " + id + " no encontrado");
-                }
-            })
-            .toList();
-    
-        return usuarios;
+        return ids.stream()
+                  .map(id -> obtenerUsuarioPorId(id, jwt))
+                  .toList();
     }
-    
 }

@@ -3,50 +3,54 @@ package minipimplytixinfosquad.entidades.clients;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.RequiredArgsConstructor;
+
+import java.net.URI;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.DefaultUriBuilderFactory;
 
 @Component
+@RequiredArgsConstructor
 public class ProductosClient {
 
+    @Value("${productos.base-url}")
+    private String baseUrl;
+
     private final RestTemplate restTemplate = new RestTemplate();
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final DefaultUriBuilderFactory ubf = new DefaultUriBuilderFactory();
 
-    @Value("${productos.base-url}")          
-    private String productosBaseUrl;        
+    /* 4 end-points casi idénticos → factor común */
+    public boolean cuentaTieneProductos (Long id, String jwt){ return hayRecursos("/producto",           id, jwt); }
+    public boolean cuentaTieneCategorias(Long id, String jwt){ return hayRecursos("/categoria-producto", id, jwt); }
+    public boolean cuentaTieneRelaciones(Long id, String jwt){ return hayRecursos("/relacion",           id, jwt); }
+    public boolean cuentaTieneActivos   (Long id, String jwt){ return hayRecursos("/activo",             id, jwt); }
 
-    public boolean cuentaTieneProductos(Long idCuenta, String jwt) {
-        return hayRecursos(productosBaseUrl + "/producto?idCuenta=" + idCuenta, jwt);
-    }
+    /* --------------------------------------------------------------------- */
+    private boolean hayRecursos(String path, Long idCuenta, String jwt) {
 
-    public boolean cuentaTieneCategorias(Long idCuenta, String jwt) {
-        return hayRecursos(productosBaseUrl + "/categoria-producto?idCuenta=" + idCuenta, jwt);
-    }
+        URI uri = ubf.builder()
+                     .scheme("https")
+                     .host(baseUrl.replace("https://",""))
+                     .path(path)
+                     .queryParam("idCuenta", idCuenta)
+                     .build();
 
-    public boolean cuentaTieneRelaciones(Long idCuenta, String jwt) {
-        return hayRecursos(productosBaseUrl + "/relacion?idCuenta=" + idCuenta, jwt);
-    }
+        RequestEntity<Void> rq = RequestEntity.get(uri)
+                .header("Authorization", "Bearer "+jwt)
+                .accept(MediaType.APPLICATION_JSON)
+                .build();
 
-    public boolean cuentaTieneActivos(Long idCuenta, String jwt) {
-        return hayRecursos(productosBaseUrl + "/activo?idCuenta=" + idCuenta, jwt); // si existe este endpoint
-    }
+        ResponseEntity<JsonNode> rs =
+                restTemplate.exchange(rq, JsonNode.class);
 
-    /* ---------- método común ---------- */
-    private boolean hayRecursos(String url, String jwt) {
-        HttpHeaders h = new HttpHeaders();
-        h.set("Authorization", "Bearer " + jwt);
-        h.setAccept(List.of(MediaType.APPLICATION_JSON));
-        ResponseEntity<String> res = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(h), String.class);
-
-        try {
-            JsonNode root = mapper.readTree(res.getBody());
-            return root.isArray() && root.size() > 0;
-        } catch (Exception e) {
-            return false;
-        }
+        return rs.getStatusCode()==HttpStatus.OK &&
+               rs.getBody()!=null &&
+               rs.getBody().isArray() &&
+               rs.getBody().size()>0;
     }
 }
