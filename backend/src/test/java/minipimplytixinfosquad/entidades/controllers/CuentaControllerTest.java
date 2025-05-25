@@ -206,6 +206,63 @@ class CuentaControllerFullTest {
         assertThrows(RuntimeException.class, () -> ctrl.crearCuenta(in, req));
     }
 
+    @Test @DisplayName("crearCuenta – sin idUsuario lanza RuntimeException")
+    void crearCuentaSinIdUsuarioDirecto() {
+        mockAuth(7L, true);
+
+        CuentaNuevaDTO in = new CuentaNuevaDTO(); 
+        in.setNombre("X"); 
+        in.setPlan(CuentaNuevaDTO.PlanIdDTO.builder().id(1L).build());
+        
+        MockHttpServletRequest req = new MockHttpServletRequest(); // NO añades idUsuario
+
+        CuentaController ctrl = new CuentaController();
+        ReflectionTestUtils.setField(ctrl, "cuentaService", cuentaService);
+        ReflectionTestUtils.setField(ctrl, "planService", planService);
+        ReflectionTestUtils.setField(ctrl, "usuarioClient", usuarioClient);
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> ctrl.crearCuenta(in, req));
+        assertEquals("ID de usuario no disponible en el token.", ex.getMessage());
+    }
+
+    // crearCuenta – plan no nulo pero id plan es null
+    @Test @DisplayName("crearCuenta – plan sin id lanza RuntimeException")
+    void crearCuentaPlanSinId() {
+        mockAuth(7L, true);
+
+        CuentaNuevaDTO in = new CuentaNuevaDTO();
+        in.setNombre("X");
+        
+        in.setPlan(CuentaNuevaDTO.PlanIdDTO.builder().build()); // id nulo explícito
+
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        req.setAttribute("idUsuario", 7L);
+
+        CuentaController ctrl = new CuentaController();
+        ReflectionTestUtils.setField(ctrl, "planService", planService);
+        ReflectionTestUtils.setField(ctrl, "cuentaService", cuentaService);
+        ReflectionTestUtils.setField(ctrl, "usuarioClient", usuarioClient);
+
+        assertThrows(RuntimeException.class, () -> ctrl.crearCuenta(in, req));
+    }
+
+    @Test @DisplayName("POST /cuenta – plan no encontrado ⇒ 404")
+    void crearCuentaPlanNoEncontrado() throws Exception {
+        mockAuth(7L, true);
+
+        CuentaNuevaDTO in = new CuentaNuevaDTO();
+        in.setNombre("X");
+        in.setPlan(CuentaNuevaDTO.PlanIdDTO.builder().id(99L).build());
+
+        when(planService.obtenerPlanPorId(99L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(post("/cuenta")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(in))
+                .requestAttr("idUsuario", 7L))
+            .andExpect(status().isNotFound());
+    }
+
     /* ───────── PUT /cuenta/{id} ───────── */
     @Test @DisplayName("PUT /cuenta/{id} – actualiza OK")
     void actualizarCuentaOk() throws Exception {
@@ -311,6 +368,33 @@ class CuentaControllerFullTest {
                .andExpect(status().isForbidden());
     }
 
+    // obtenerPropietario – usuario invitado (no admin pero sí incluido)
+    @Test @DisplayName("GET /cuenta/{id}/propietario – usuario invitado OK")
+    void obtenerPropietarioUsuarioInvitado() throws Exception {
+        mockAuth(7L, false);
+        Plan p = plan(1);
+        Cuenta c = cuenta(1, p);
+        when(cuentaService.obtenerCuentaPorId(1L)).thenReturn(Optional.of(c));
+        when(usuarioClient.obtenerUsuarioPorId(eq(7L), anyString()))
+                .thenReturn(user(7, "x@x.com"));
+        mockMvc.perform(get("/cuenta/1/propietario")
+                .header("Authorization", "Bearer t"))
+            .andExpect(status().isOk());
+    }
+
+    // actualizarPropietario – sólo email informado (sin id) ⇒ 400
+    @Test @DisplayName("POST /cuenta/{id}/propietario – sólo email ⇒ 400")
+    void actualizarPropietarioSoloEmailBadRequest() throws Exception {
+        mockAuth(1L, true);
+        NuevoPropietarioDTO dto = new NuevoPropietarioDTO();
+        dto.setEmail("x@x.com");
+        mockMvc.perform(post("/cuenta/1/propietario")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto))
+                .header("Authorization", "Bearer t"))
+            .andExpect(status().isBadRequest());
+    }
+
     /* ───────── GET /cuenta/{id}/usuarios ───────── */
     @Test @DisplayName("GET /cuenta/{id}/usuarios – OK")
     void obtenerUsuariosOk() throws Exception {
@@ -340,6 +424,20 @@ class CuentaControllerFullTest {
         mockMvc.perform(get("/cuenta/1/usuarios")
                 .header("Authorization", "Bearer tok"))
                .andExpect(status().isForbidden());
+    }
+
+    // obtenerUsuarios – como admin (no propietario) OK
+    @Test @DisplayName("GET /cuenta/{id}/usuarios – admin no propietario OK")
+    void obtenerUsuariosComoAdmin() throws Exception {
+        mockAuth(1L, true); // ROLE_ADMIN
+        Plan p = plan(1);
+        Cuenta c = cuenta(1, p);
+        when(cuentaService.obtenerCuentaPorId(1L)).thenReturn(Optional.of(c));
+        when(usuarioClient.obtenerUsuariosPorIds(anyList(), anyString()))
+                .thenReturn(List.of(user(7, "x@x.com")));
+        mockMvc.perform(get("/cuenta/1/usuarios")
+                .header("Authorization", "Bearer t"))
+            .andExpect(status().isOk());
     }
 
     /* ───────── POST /cuenta/{id}/usuarios ───────── */
@@ -475,6 +573,24 @@ class CuentaControllerFullTest {
             .content(objectMapper.writeValueAsString(List.of(d)))
             .header("Authorization", "Bearer token")) 
             .andExpect(status().isForbidden());
+    }
+
+    // actualizarUsuarios – propietario ya incluido ⇒ no se añade de nuevo
+    @Test @DisplayName("POST /cuenta/{id}/usuarios – propietario ya incluido")
+    void actualizarUsuariosConPropietarioIncluido() throws Exception {
+        mockAuth(7L, true);
+        Plan p = plan(1);
+        Cuenta c = cuenta(1, p);
+        UsuarioDTO dto = UsuarioDTO.builder().id(7L).email("prop@x.com").build();
+        when(cuentaService.obtenerCuentaPorId(1L)).thenReturn(Optional.of(c));
+        when(usuarioClient.obtenerUsuarioPorId(eq(7L), anyString()))
+                .thenReturn(user(7, "prop@x.com"));
+        doNothing().when(cuentaService).actualizarUsuarios(eq(1L), anyList());
+        mockMvc.perform(post("/cuenta/1/usuarios")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(List.of(dto)))
+                .header("Authorization", "Bearer t"))
+            .andExpect(status().isOk());
     }
 
     /* ───────── POST /cuenta/{id}/propietario ───────── */

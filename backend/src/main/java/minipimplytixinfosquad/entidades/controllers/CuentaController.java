@@ -66,8 +66,8 @@ public class CuentaController {
         }
 
         Plan plan = planService.obtenerPlanPorId(nuevaCuenta.getPlan().getId())
-                .orElseThrow(() -> new RuntimeException("Plan no encontrado con id: " + nuevaCuenta.getPlan().getId()));
-
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Plan no encontrado con id: " + nuevaCuenta.getPlan().getId()));
+        
         Cuenta cuenta = CuentaMapper.toEntity(nuevaCuenta, plan);
         cuenta.setPropietarioId(idUsuario);
         cuenta.setUsuariosIds(List.of(idUsuario)); //lo añade como usuario
