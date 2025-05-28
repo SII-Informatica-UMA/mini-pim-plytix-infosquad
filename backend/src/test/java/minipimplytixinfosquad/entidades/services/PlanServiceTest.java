@@ -105,7 +105,7 @@ public class PlanServiceTest {
     }
 
     @Test
-    @DisplayName("Debe obtener un plan por ID correctamente")
+    @DisplayName("Debe obtener un plan por ID de forma correcta")
     void testObtenerPlanPorId() {
        
         Plan plan = new Plan();

@@ -205,6 +205,8 @@ class CuentaServiceFullTest {
                      ()->service.eliminarCuentaSiNoTieneRecursos(1L,"tok"));
     }
 
+
+    // -------- -------------------------------------
     /* -------- lambdas sinteticas restantes -------- */
     @Test
     @DisplayName("Ejecutar lambdas sinteticas para cobertura completa de CuentaService")
