@@ -2,6 +2,7 @@ package minipimplytixinfosquad.entidades.clients;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -32,6 +33,7 @@ class ProductosClientTest {
     }
 
     @Test
+    @DisplayName("cuentaTieneProductos - devuelve true cuando la respuesta contiene elementos")
     void cuentaTieneProductos_trueCuandoHayArrayNoVacio() {
         server.expect(once(),
                 requestTo("https://mallba3.lcc.uma.es/producto?idCuenta=1"))
@@ -42,6 +44,7 @@ class ProductosClientTest {
     }
 
     @Test
+    @DisplayName("cuentaTieneProductos - devuelve false cuando la respuesta está vacía")
     void cuentaTieneProductos_falseCuandoArrayVacio() {
         server.expect(once(),
                 requestTo("https://mallba3.lcc.uma.es/producto?idCuenta=2"))
@@ -51,6 +54,7 @@ class ProductosClientTest {
     }
 
     @Test
+    @DisplayName("cuentaTieneCategorias - devuelve true cuando la respuesta contiene elementos")
     void cuentaTieneCategorias_trueCuandoHayArrayNoVacio() {
         server.expect(once(),
                 requestTo("https://mallba3.lcc.uma.es/categoria-producto?idCuenta=3"))
@@ -61,6 +65,7 @@ class ProductosClientTest {
     }
 
     @Test
+    @DisplayName("cuentaTieneCategorias - devuelve false cuando la respuesta está vacía")
     void cuentaTieneCategorias_falseCuandoArrayVacio() {
         server.expect(once(),
                 requestTo("https://mallba3.lcc.uma.es/categoria-producto?idCuenta=3"))
@@ -71,6 +76,7 @@ class ProductosClientTest {
     }
 
     @Test
+    @DisplayName("cuentaTieneRelaciones - devuelve true cuando la respuesta contiene elementos")
     void cuentaTieneRelaciones_trueCuandoHayArrayNoVacio() {
         server.expect(once(),
                 requestTo("https://mallba3.lcc.uma.es/relacion?idCuenta=4"))
@@ -81,6 +87,7 @@ class ProductosClientTest {
     }
 
     @Test
+    @DisplayName("cuentaTieneRelaciones - devuelve false cuando la respuesta está vacía")
     void cuentaTieneRelaciones_falseCuandoArrayVacio() {
         server.expect(once(),
                 requestTo("https://mallba3.lcc.uma.es/relacion?idCuenta=4"))
@@ -91,6 +98,7 @@ class ProductosClientTest {
     }
 
     @Test
+    @DisplayName("cuentaTieneActivos - devuelve true cuando la respuesta contiene elementos")
     void cuentaTieneActivos_trueCuandoHayArrayNoVacio() {
         server.expect(once(),
                 requestTo("https://mallba3.lcc.uma.es/activo?idCuenta=5"))
@@ -101,6 +109,7 @@ class ProductosClientTest {
     }
 
     @Test
+    @DisplayName("cuentaTieneActivos - devuelve false cuando la respuesta está vacía")
     void cuentaTieneActivos_falseCuandoArrayVacio() {
         server.expect(once(),
                 requestTo("https://mallba3.lcc.uma.es/activo?idCuenta=5"))

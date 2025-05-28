@@ -2,6 +2,7 @@ package minipimplytixinfosquad.entidades.clients;
 
 import minipimplytixinfosquad.entidades.dtos.UsuarioResumenDTO;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -31,8 +32,9 @@ class UsuarioClientTest {
         server = MockRestServiceServer.bindTo(rt).build();
     }
 
-    /* ───────── obtenerUsuarioPorId ───────── */
+    /* -------- obtenerUsuarioPorId -------- */
     @Test
+    @DisplayName("obtenerUsuarioPorId - devuelve DTO correctamente")
     void obtenerUsuarioPorId_ok() {
         server.expect(once(),
                 requestTo("https://mallba3.lcc.uma.es/usuario?id=8"))
@@ -47,6 +49,7 @@ class UsuarioClientTest {
     }
 
     @Test
+    @DisplayName("obtenerUsuarioPorId - lanza excepción si no hay usuario")
     void obtenerUsuarioPorId_notFound_lanzaExcepcion() {
         server.expect(once(),
                 requestTo("https://mallba3.lcc.uma.es/usuario?id=9"))
@@ -56,14 +59,15 @@ class UsuarioClientTest {
                      () -> client.obtenerUsuarioPorId(9L, "tok"));
     }
 
-    /* ───────── obtenerUsuarioPorEmail ───────── */
+    /* -------- obtenerUsuarioPorEmail -------- */
     @Test
+    @DisplayName("obtenerUsuarioPorEmail - devuelve DTO correctamente")
     void obtenerUsuarioPorEmail_ok() {
         server.expect(once(),
                 request -> {
                     assertEquals("/usuario", request.getURI().getPath());
                     assertEquals("mallba3.lcc.uma.es", request.getURI().getHost());
-                    // Spring NO codifica el '@' en query:
+                    
                     assertTrue(request.getURI().getQuery().contains("email=foo@bar.com"));
                 })
               .andExpect(method(HttpMethod.GET))
@@ -77,6 +81,7 @@ class UsuarioClientTest {
     }
 
     @Test
+    @DisplayName("obtenerUsuarioPorEmail - lanza excepción si no encuentra usuario")
     void obtenerUsuarioPorEmail_notFound_lanzaExcepcion() {
         server.expect(once(),
                 request -> assertTrue(request.getURI().getQuery().contains("email=foo@bar.com")))
@@ -86,8 +91,9 @@ class UsuarioClientTest {
                      () -> client.obtenerUsuarioPorEmail("foo@bar.com", "tok"));
     }
 
-    /* ───────── obtenerUsuariosPorIds ───────── */
+    /* -------- obtenerUsuariosPorIds -------- */
     @Test
+    @DisplayName("obtenerUsuariosPorIds - devuelve lista de usuarios correctamente")
     void obtenerUsuariosPorIds_ok() {
         server.expect(once(),
                 requestTo("https://mallba3.lcc.uma.es/usuario?id=7"))

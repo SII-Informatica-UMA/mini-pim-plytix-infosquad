@@ -122,4 +122,6 @@ class PlanControllerTest {
 
         Mockito.verify(planService).eliminarPlan(3L);
     }
+
+    //--------------------------------------
 }

@@ -41,14 +41,12 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-/**
- * Cobertura 100 % del CuentaController.
- */
+
 @WebMvcTest(CuentaController.class)
 @AutoConfigureMockMvc(addFilters = false)
 class CuentaControllerFullTest {
 
-    /* ░░░ Beans de test ░░░ */
+    //  Beans de test 
     @Autowired private MockMvc      mockMvc;
     @Autowired private ObjectMapper objectMapper;
 
@@ -56,14 +54,14 @@ class CuentaControllerFullTest {
     @MockBean private PlanService   planService;
     @MockBean private UsuarioClient usuarioClient;
 
-    /* filtros JWT “silenciados” */
+    // filtros JWT 
     @MockBean private JwtRequestFilter jwtRequestFilter;
     @MockBean private JwtUtil          jwtUtil;
 
-    /* ░░░ Builders rápidos ░░░ */
-    /* ░ Helpers reutilizables ░ */
+   
+    //para reutilizar
 
-    /** Inserta autenticación en el SecurityContext con el rol deseado. */
+    /** Inserta autenticacion en el SecurityContext con el rol deseado. */
     private void mockAuth(long id, boolean admin) {
         Authentication a = new UsernamePasswordAuthenticationToken(
                 String.valueOf(id), null,
@@ -128,9 +126,9 @@ class CuentaControllerFullTest {
                                 .build();
     }
 
-    /* ══════════════════════════   CASOS DE PRUEBA   ═════════════════════════ */
+    /* CASOS DE PRUEBA -----------------------------------------------------------------*/
 
-    /* ───────── GET /cuenta ───────── */
+    /* ------------ GET /cuenta ------------- */
     @Test @DisplayName("GET /cuenta – lista OK (admin)")
     void listarCuentasOk() throws Exception {
         mockAuth(1L, true);
@@ -148,7 +146,7 @@ class CuentaControllerFullTest {
         }
     }
 
-    /* ───────── POST /cuenta ───────── */
+    /* ------------ POST /cuenta --------------- */
     @Test @DisplayName("POST /cuenta – crea OK")
     void crearCuentaOk() throws Exception {
         mockAuth(7L, true);
@@ -177,21 +175,8 @@ class CuentaControllerFullTest {
         }
     }
 
-    /* 
-    @Test @DisplayName("POST /cuenta – sin plan → 500")
-    void crearCuentaSinPlan() throws Exception {
-        mockAuth(7L, true);
-
-        CuentaNuevaDTO in = new CuentaNuevaDTO();
-        in.setNombre("X");  // plan nulo
-
-        mockMvc.perform(post("/cuenta")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(in))
-                .requestAttr("idUsuario", 7L))
-               .andExpect(status().isInternalServerError());
-    }*/
-     @Test @DisplayName("crearCuenta – sin plan lanza RuntimeException")
+    
+     @Test @DisplayName("crearCuenta sin plan lanza RuntimeException")
     void crearCuentaSinPlan() {
         mockAuth(7L, true);
 
@@ -214,7 +199,7 @@ class CuentaControllerFullTest {
         in.setNombre("X"); 
         in.setPlan(CuentaNuevaDTO.PlanIdDTO.builder().id(1L).build());
         
-        MockHttpServletRequest req = new MockHttpServletRequest(); // NO añades idUsuario
+        MockHttpServletRequest req = new MockHttpServletRequest(); // No idUsuario
 
         CuentaController ctrl = new CuentaController();
         ReflectionTestUtils.setField(ctrl, "cuentaService", cuentaService);
@@ -233,7 +218,7 @@ class CuentaControllerFullTest {
         CuentaNuevaDTO in = new CuentaNuevaDTO();
         in.setNombre("X");
         
-        in.setPlan(CuentaNuevaDTO.PlanIdDTO.builder().build()); // id nulo explícito
+        in.setPlan(CuentaNuevaDTO.PlanIdDTO.builder().build()); // id nulo 
 
         MockHttpServletRequest req = new MockHttpServletRequest();
         req.setAttribute("idUsuario", 7L);
@@ -263,8 +248,8 @@ class CuentaControllerFullTest {
             .andExpect(status().isNotFound());
     }
 
-    /* ───────── PUT /cuenta/{id} ───────── */
-    @Test @DisplayName("PUT /cuenta/{id} – actualiza OK")
+    /* -------------- PUT /cuenta/{id} ---------- */
+    @Test @DisplayName("PUT /cuenta/{id} actualiza OK")
     void actualizarCuentaOk() throws Exception {
         mockAuth(1L, true);
 
@@ -291,7 +276,7 @@ class CuentaControllerFullTest {
         }
     }
 
-    @Test @DisplayName("PUT /cuenta/{id} – plan inexistente ⇒ 404")  
+    @Test @DisplayName("PUT /cuenta/{id} plan inexistente ⇒ 404")  
     void actualizarCuentaPlanNoExiste() throws Exception{
         mockAuth(1,true);
         CuentaNuevaDTO in=new CuentaNuevaDTO();
@@ -306,8 +291,10 @@ class CuentaControllerFullTest {
                .andExpect(status().isNotFound());
     }
 
-    /* 🆕 1 ▸ actualizarCuenta – plan nulo ⇒ RuntimeException */
-    @Test void actualizarCuentaSinPlan() {
+    /* actualizarCuenta – plan nulo - RuntimeException */
+    @Test
+    @DisplayName("Actualizar cuenta con plan nulo debe lanzar RuntimeException")
+    void actualizarCuentaSinPlan() {
         mockAuth(1, true);
         CuentaNuevaDTO dto = new CuentaNuevaDTO(); dto.setNombre("X"); // plan null
         CuentaController ctrl = new CuentaController();
@@ -316,8 +303,8 @@ class CuentaControllerFullTest {
                     () -> ctrl.actualizarCuenta(1L, dto));
     }
 
-    /* ───────── DELETE /cuenta/{id} ───────── */
-    @Test @DisplayName("DELETE /cuenta/{id} – OK sin recursos")
+    /* -------- DELETE /cuenta/{id} --------- */
+    @Test @DisplayName("DELETE /cuenta/{id} OK sin recursos")
     void eliminarCuentaOk() throws Exception {
         mockAuth(1L, true);
         doNothing().when(cuentaService).eliminarCuentaSiNoTieneRecursos(eq(1L), anyString());
@@ -327,7 +314,7 @@ class CuentaControllerFullTest {
                .andExpect(status().isOk());
     }
 
-    @Test @DisplayName("DELETE /cuenta/{id} – con recursos → 403")
+    @Test @DisplayName("DELETE /cuenta/{id} con recursos → 403")
     void eliminarCuentaConRecursos() throws Exception {
         mockAuth(1L, true);
         doThrow(new CuentaConRecursosException("hay recursos"))
@@ -338,7 +325,7 @@ class CuentaControllerFullTest {
                .andExpect(status().isForbidden());
     }
 
-    /* ───────── GET /cuenta/{id}/propietario ───────── */
+    /* ---------- GET /cuenta/{id}/propietario ------------ */
     @Test @DisplayName("GET /cuenta/{id}/propietario – OK")
     void obtenerPropietarioOk() throws Exception {
         mockAuth(7L, true);
@@ -368,7 +355,7 @@ class CuentaControllerFullTest {
                .andExpect(status().isForbidden());
     }
 
-    // obtenerPropietario – usuario invitado (no admin pero sí incluido)
+    // obtenerPropietario – usuario invitado, no admin pero si incluido
     @Test @DisplayName("GET /cuenta/{id}/propietario – usuario invitado OK")
     void obtenerPropietarioUsuarioInvitado() throws Exception {
         mockAuth(7L, false);
@@ -382,7 +369,7 @@ class CuentaControllerFullTest {
             .andExpect(status().isOk());
     }
 
-    // actualizarPropietario – sólo email informado (sin id) ⇒ 400
+    // actualizarPropietario – solo email informado (sin id) = 400
     @Test @DisplayName("POST /cuenta/{id}/propietario – sólo email ⇒ 400")
     void actualizarPropietarioSoloEmailBadRequest() throws Exception {
         mockAuth(1L, true);
@@ -395,7 +382,7 @@ class CuentaControllerFullTest {
             .andExpect(status().isBadRequest());
     }
 
-    /* ───────── GET /cuenta/{id}/usuarios ───────── */
+    /* --------- GET /cuenta/{id}/usuarios --------- */
     @Test @DisplayName("GET /cuenta/{id}/usuarios – OK")
     void obtenerUsuariosOk() throws Exception {
         mockAuth(7L, true);
@@ -440,32 +427,11 @@ class CuentaControllerFullTest {
             .andExpect(status().isOk());
     }
 
-    /* ───────── POST /cuenta/{id}/usuarios ───────── */
-    /* 
-    @Test @DisplayName("POST /cuenta/{id}/usuarios – OK")
+    /* ------------ POST /cuenta/{id}/usuarios ----------- */
+
+    @Test 
+    @DisplayName("Actualizar usuarios de la cuenta correctamente")
     void actualizarUsuariosOk() throws Exception {
-        mockAuth(7L, true);
-        Plan plan = buildPlan(1);
-        Cuenta cta = buildCuenta(1, plan, 7L, List.of(7L));
-
-        UsuarioDTO inUsr = UsuarioDTO.builder().id(8L).email("a@x.com").build();
-        UsuarioResumenDTO resolved = buildUsuario(8L, "a@x.com");
-
-        when(cuentaService.obtenerCuentaPorId(1L)).thenReturn(Optional.of(cta));
-        when(usuarioClient.obtenerUsuarioPorId(eq(8L), anyString())).thenReturn(resolved);
-
-        doNothing().when(cuentaService).actualizarUsuarios(eq(1L), anyList());
-
-        mockMvc.perform(post("/cuenta/1/usuarios")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(List.of(inUsr)))
-                .header("Authorization", "Bearer tok"))
-               .andExpect(status().isOk())
-               .andExpect(jsonPath("$[0].email").value("a@x.com"));
-    }
-    */
-
-    @Test void actualizarUsuariosOk() throws Exception {
         mockAuth(7L, true);
         Plan p = buildPlan(1);
         Cuenta c = buildCuenta(1, p);
@@ -475,7 +441,7 @@ class CuentaControllerFullTest {
         when(cuentaService.obtenerCuentaPorId(1L)).thenReturn(Optional.of(c));
         when(usuarioClient.obtenerUsuarioPorId(eq(8L), anyString()))
                 .thenReturn(buildUser(8, "a@x.com"));
-        /* el propietario se vuelve a solicitar */
+        // el propietario se vuelve a solicitar 
         when(usuarioClient.obtenerUsuarioPorId(eq(7L), anyString()))
                 .thenReturn(buildUser(7, "prop@x.com"));
         doNothing().when(cuentaService).actualizarUsuarios(eq(1L), anyList());
@@ -488,7 +454,7 @@ class CuentaControllerFullTest {
                .andExpect(jsonPath("$[0].email").value("a@x.com"));
     }
 
-    @Test @DisplayName("POST /cuenta/{id}/usuarios – id/email no coinciden → 403")
+    @Test @DisplayName("POST /cuenta/{id}/usuarios - id/email no coinciden = 403")
     void actualizarUsuariosIdEmailMismatch() throws Exception {
         mockAuth(7L, true);
         Plan plan = buildPlan(1);
@@ -507,7 +473,7 @@ class CuentaControllerFullTest {
                .andExpect(status().isForbidden());
     }
 
-    @Test @DisplayName("POST /cuenta/{id}/usuarios – sólo email OK")  
+    @Test @DisplayName("POST /cuenta/{id}/usuarios - sólo email OK")  
     void actualizarUsuariosSoloEmailOk() throws Exception{
         mockAuth(7,true);
         Plan p=plan(1); Cuenta c=cuenta(1,p);
@@ -529,9 +495,11 @@ class CuentaControllerFullTest {
                .andExpect(jsonPath("$[0].email").value("x@x.com"));
     }
 
-    /* 🆕 2 ▸ actualizarUsuarios – ni admin ni propietario ⇒ 403 */
-    @Test void actualizarUsuariosForbidden() throws Exception {
-        mockAuth(99, false);                 // ROLE_USER, NO propietario
+    /*actualizarUsuarios – ni admin ni propietario = 403 */
+    @Test 
+    @DisplayName("Actualizar usuarios de la cuenta siendo usuario sin permisos devuelve 403")
+    void actualizarUsuariosForbidden() throws Exception {
+        mockAuth(99, false); // ROLE_USER, NO propietario
         when(cuentaService.obtenerCuentaPorId(1L))
                 .thenReturn(Optional.of(cuenta(1, plan(1))));
 
@@ -557,8 +525,8 @@ class CuentaControllerFullTest {
             .andExpect(status().isBadRequest());
     }
 
-    /* 4 ▸ actualizarUsuarios – usuarioClient lanza excepción ⇒ 403 */
-    @Test @DisplayName("POST /cuenta/{id}/usuarios – usuario no existe ⇒ 403")  
+    /* actualizarUsuarios – usuarioClient lanza excepción ⇒ 403 */
+    @Test @DisplayName("POST /cuenta/{id}/usuarios - usuario no existe = 403")  
     void actualizarUsuariosUserNotFound() throws Exception{
         mockAuth(7,true);
         Plan p=plan(1); Cuenta c=cuenta(1,p);
@@ -575,7 +543,7 @@ class CuentaControllerFullTest {
             .andExpect(status().isForbidden());
     }
 
-    // actualizarUsuarios – propietario ya incluido ⇒ no se añade de nuevo
+    // actualizarUsuarios – propietario ya incluido = no se añade de nuevo
     @Test @DisplayName("POST /cuenta/{id}/usuarios – propietario ya incluido")
     void actualizarUsuariosConPropietarioIncluido() throws Exception {
         mockAuth(7L, true);
@@ -593,7 +561,7 @@ class CuentaControllerFullTest {
             .andExpect(status().isOk());
     }
 
-    /* ───────── POST /cuenta/{id}/propietario ───────── */
+    /* ----------- POST /cuenta/{id}/propietario ----------- */
     @Test @DisplayName("POST /cuenta/{id}/propietario – OK")
     void actualizarPropietarioOk() throws Exception {
         mockAuth(1L, true);
@@ -652,7 +620,7 @@ class CuentaControllerFullTest {
                .andExpect(status().isBadRequest());
     }
 
-    /* 5 ▸ actualizarPropietario – usuarioClient falla ⇒ 403 */
+    /* actualizarPropietario – usuarioClient falla = 403 */
     @Test @DisplayName("POST /cuenta/{id}/propietario – usuarioClient falla ⇒ 403") 
     void actualizarPropietarioUserNotFound() throws Exception{
         mockAuth(1,true);
@@ -671,10 +639,10 @@ class CuentaControllerFullTest {
                .andExpect(status().isForbidden());
     }
 
-    /* ───────── Cobertura directa extraerTokenDeRequest ───────── */
+    /* --------- extraerTokenDeRequest ----------- */
     @Test @DisplayName("extraerTokenDeRequest – token OK")
     void extraerTokenOk() throws Exception {
-    MockHttpServletRequest req = new MockHttpServletRequest(); // ← aquí está el cambio
+    MockHttpServletRequest req = new MockHttpServletRequest(); 
     req.addHeader("Authorization", "Bearer abc.def");
 
     CuentaController ctrl = new CuentaController();
@@ -685,19 +653,9 @@ class CuentaControllerFullTest {
     assertEquals("abc.def", token);
     }
 
-    /* 
-    @Test @DisplayName("extraerTokenDeRequest – sin cabecera lanza RuntimeException")
+    @Test 
+    @DisplayName("Extraer token sin header debe lanzar RuntimeException")
     void extraerTokenSinHeader() throws Exception {
-        HttpServletRequest req = new MockHttpServletRequest();
-        CuentaController ctrl = new CuentaController();
-        Method m = CuentaController.class
-                    .getDeclaredMethod("extraerTokenDeRequest", HttpServletRequest.class);
-        m.setAccessible(true);
-
-        assertThrows(RuntimeException.class, () -> m.invoke(ctrl, req));
-    }
-    */
-    @Test void extraerTokenSinHeader() throws Exception {
         MockHttpServletRequest req = new MockHttpServletRequest();
         CuentaController ctrl = new CuentaController();
         Method m = CuentaController.class
@@ -709,7 +667,7 @@ class CuentaControllerFullTest {
         assertTrue(ex.getCause() instanceof RuntimeException);
     }
 
-    /* 6 ▸ extraerTokenDeRequest – cabecera sin “Bearer ” ⇒ RuntimeException */
+    /*extraerTokenDeRequest – cabecera sin “Bearer ” = RuntimeException */
     @Test @DisplayName("extraerTokenDeRequest – cabecera sin Bearer ⇒ RuntimeException") // 🆕
     void extraerTokenSinBearer() throws Exception{
         MockHttpServletRequest req=new MockHttpServletRequest();
@@ -723,8 +681,10 @@ class CuentaControllerFullTest {
         assertTrue(ex.getCause() instanceof RuntimeException);
     }
 
-    /* 🆕 3 ▸ Invoca la rama del getter de token sin “Bearer ” */
-    @Test void extraerTokenSinPrefijoBearer() throws Exception {
+    // Invoca la rama del getter de token sin “Bearer ” 
+    @Test 
+    @DisplayName("Extraer token sin prefijo Bearer debe lanzar RuntimeException")
+    void extraerTokenSinPrefijoBearer() throws Exception {
         MockHttpServletRequest r = new MockHttpServletRequest();
         r.addHeader("Authorization", "Token abc");
         Method m = CuentaController.class
@@ -735,8 +695,10 @@ class CuentaControllerFullTest {
         assertTrue(ex.getCause() instanceof RuntimeException);
     }
 
-    /* 🆕 4 ▸ Ejecuta las lambdas sintéticas para cubrir instrucciones faltantes */
-    @Test void cubrirLambdasSinteticas() throws Exception {
+    /* Ejecuta las lambdas sinteticas para cubrir instrucciones faltantes */
+    @Test 
+    @DisplayName("Ejecutar lambdas sintéticas para cobertura completa de CuentaController")
+    void cubrirLambdasSinteticas() throws Exception {
         for (Method met : CuentaController.class.getDeclaredMethods()) {
             if (met.getName().startsWith("lambda$")) {
                 met.setAccessible(true);
@@ -748,7 +710,7 @@ class CuentaControllerFullTest {
                     default                  -> null;
                 };
                 try { met.invoke(null, p.length==0? new Object[]{} : new Object[]{arg}); }
-                catch (Exception ignored) { /* ignoramos NPEs internas, solo queremos cobertura */ }
+                catch (Exception ignored) { }
             }
         }
     }

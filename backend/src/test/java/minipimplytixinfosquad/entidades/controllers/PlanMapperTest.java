@@ -2,6 +2,8 @@ package minipimplytixinfosquad.entidades.controllers;
 
 import minipimplytixinfosquad.entidades.dtos.PlanDTO;
 import minipimplytixinfosquad.entidades.entities.Plan;
+
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -11,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class PlanMapperTest {
 
     @Test
+    @DisplayName("Conversion de Plan a PlanDTO correctamente")
     void toDTO_OK() {
         Plan plan = Plan.builder()
                 .id(1L).nombre("Básico")
@@ -30,11 +33,13 @@ class PlanMapperTest {
     }
 
     @Test
+    @DisplayName("Conversion a DTO con Plan null devuelve null")
     void toDTO_planNullDevuelveNull() {
         assertNull(PlanMapper.toDTO(null));
     }
 
     @Test
+    @DisplayName("Conversion a DTO con precio null en Plan devuelve precio cero")
     void toDTO_precioNullDaCero() {
         Plan plan = Plan.builder()
             .id(1L).nombre("PlanX")
@@ -48,6 +53,7 @@ class PlanMapperTest {
     }
 
     @Test
+    @DisplayName("Conversion de PlanDTO a Plan correctamente")
     void toEntity_OK() {
         PlanDTO dto = PlanDTO.builder()
             .id(2L).nombre("Pro")
@@ -67,6 +73,7 @@ class PlanMapperTest {
     }
 
     @Test
+    @DisplayName("Conversion a Plan con DTO null devuelve null")
     void toEntity_dtoNullDevuelveNull() {
         assertNull(PlanMapper.toEntity(null));
     }

@@ -5,6 +5,8 @@ import minipimplytixinfosquad.entidades.dtos.CuentaNuevaDTO;
 import minipimplytixinfosquad.entidades.dtos.PlanDTO;
 import minipimplytixinfosquad.entidades.entities.Cuenta;
 import minipimplytixinfosquad.entidades.entities.Plan;
+
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -17,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class CuentaMapperTest {
 
     @Test
+    @DisplayName("Conversion de Cuenta a CuentaDTO correctamente")
     void toDTO_OK() {
         Plan plan = Plan.builder()
                 .id(1L).nombre("Pro")
@@ -44,6 +47,7 @@ class CuentaMapperTest {
     }
 
     @Test
+    @DisplayName("Conversion a DTO con fechaAlta nula devuelve fechaAlta nula en DTO")
     void toDTO_fechaAltaNula() {
         Plan plan = Plan.builder()
             .id(1L).nombre("PlanX")
@@ -63,6 +67,7 @@ class CuentaMapperTest {
     }
 
     @Test
+    @DisplayName("Conversion de CuentaNuevaDTO y Plan a Cuenta correctamente")
     void toEntity_OK() {
         CuentaNuevaDTO dto = new CuentaNuevaDTO();
         dto.setNombre("C");
@@ -85,6 +90,7 @@ class CuentaMapperTest {
     }
 
     @Test
+    @DisplayName("Conversion a Cuenta sin fechaAlta en DTO usa fecha actual")
     void toEntity_fechaAltaNullUsaActual() {
         CuentaNuevaDTO dto = new CuentaNuevaDTO();
         dto.setNombre("C");
